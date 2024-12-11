@@ -1,0 +1,85 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg2
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.1
+  enableSuperuserAccess: true
+  instances: 3
+
+  replicationSlots:
+    highAvailability:
+      enabled: true
+
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: datacenter
+                operator: In
+                values:
+                  - dc2
+
+  storage:
+    size: 1Gi
+
+  #bootstrap:
+  #  initdb:
+  #    dataChecksums: true
+  #    walSegmentSize: 32
+  #    import:
+  #      schemaOnly: true
+  #      type: microservice
+  #      databases:
+  #        - app
+  #      source:
+  #        externalCluster: pg1
+  #      postImportApplicationSQL:
+  #        - CREATE SUBSCRIPTION sub_plenary_documents CONNECTION 'host=pg1-rw user=logical_repuser dbname=app sslmode=require password=Thisisatest01#' PUBLICATION pub_plenary_documents
+
+  externalClusters:
+    - name: pg1
+      connectionParameters:
+        # Use the correct IP or host name for the source database
+        host: pg1-rw
+        user: logical_repuser
+        dbname: postgres
+      password:
+        name: logicalrepuser
+        key: password
+
+  monitoring:
+    enablePodMonitor: true
+
+  postgresql:
+    pg_hba:
+      - hostssl replication logical_repuser 10.0.0.0/8 md5
+      - hostssl app streaming_replica all cert
+
+    synchronous:
+      method: any
+      number: 1
+
+    parameters:
+      # General PostgreSQL settings
+      hot_standby_feedback: "on"
+      max_connections: "20"
+      shared_buffers: "128MB"
+      work_mem: "1MB"
+      maintenance_work_mem: "32MB"
+      wal_level: "logical"
+      max_wal_senders: "5"
+      max_replication_slots: "5"
+      wal_keep_size: "64MB"
+      max_wal_size: "128MB"
+      min_wal_size: "64MB"
+      checkpoint_completion_target: "0.9"
+      autovacuum: "on"
+      autovacuum_max_workers: "2"
+      autovacuum_naptime: "60"
+      log_min_messages: "warning"
+      log_connections: "on"
+      log_disconnections: "on"
+

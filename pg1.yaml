@@ -1,0 +1,94 @@
+#apiVersion: v1
+#data:
+#  password: QW5ndXNZb3VuZzE5NTU=
+#  username: bG9naWNhbF9yZXB1c2Vy
+#kind: Secret
+#metadata:
+#  name: logical_repuser
+#---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg1
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.1
+  enableSuperuserAccess: true
+  instances: 3
+
+  replicationSlots:
+    highAvailability:
+      enabled: true
+    updateInterval: 300
+
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: datacenter
+                operator: In
+                values:
+                  - dc1
+
+  storage:
+    size: 1Gi
+
+  managed:
+    roles:
+    - name: logical_repuser
+      ensure: present
+      comment: User for logical replication connections
+      login: true
+      replication: true
+      inRoles:
+        - app
+      passwordSecret:
+        name: logicalrepuser
+    services:
+      additional:
+      - selectorType: rw
+        serviceTemplate:
+          metadata:
+            name: pg1-rw-lb
+          spec:
+            type: LoadBalancer
+
+  postgresql:
+    synchronous:
+      method: any
+      number: 1
+
+    pg_hba:
+      - hostssl replication logical_repuser 10.0.0.0/8 md5
+      - hostssl app streaming_replica all cert
+
+    parameters:
+      # General PostgreSQL settings
+      hot_standby_feedback: "on"
+      pg_failover_slots.synchronize_slot_names: 'name_like:sub%'
+      pg_failover_slots.drop_extra_slots: 'false'
+      pg_failover_slots.standby_slot_names: '_cnpg_pg1_1,_cnpg_pg1_2,_cnpg_pg1_3'
+      pg_failover_slots.standby_slots_min_confirmed: '1'
+      
+      max_connections: "20"
+      shared_buffers: "128MB"
+      work_mem: "1MB"
+      maintenance_work_mem: "32MB"
+      wal_level: "logical"
+      max_wal_senders: "5"
+      max_replication_slots: "5"
+      wal_keep_size: "64MB"
+      max_wal_size: "128MB"
+      min_wal_size: "64MB"
+      checkpoint_completion_target: "0.9"
+      autovacuum: "on"
+      autovacuum_max_workers: "2"
+      autovacuum_naptime: "60"
+      log_min_messages: "warning"
+      log_connections: "on"
+      log_disconnections: "on"
+      
+  monitoring:
+    enablePodMonitor: true
+
