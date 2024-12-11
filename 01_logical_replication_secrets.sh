@@ -1,7 +1,5 @@
 #!/bin/sh
 
-#kubectl delete secret logicalrepuser
-
 kubectl delete secret logicalrepuser
 
 kubectl create secret \

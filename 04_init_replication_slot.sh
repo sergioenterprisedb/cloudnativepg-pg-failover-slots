@@ -41,10 +41,6 @@ SELECT pg_drop_replication_slot('plenary_documents');
 CREATE PUBLICATION pub_plenary_documents FOR TABLE plenary_documents;
 SELECT pg_create_logical_replication_slot('sub_slot_plenary_documents','pgoutput');
 EOF
-#kubectl-cnpg publication create pg1 \
-#             --publication pub_plenary_documents \
-#             --table plenary_documents \
-#             --dbname app
 
 # pg2
 kubectl-cnpg psql pg2 << EOF
@@ -97,11 +93,6 @@ CREATE PUBLICATION pub_test FOR TABLE test;
 SELECT pg_create_logical_replication_slot('sub_slot_test','pgoutput');
 
 EOF
-#kubectl-cnpg publication create pg1 \
-#             --publication pub_test \
-#             --table test \
-#             --dbname app
-
 
 # pg2
 kubectl-cnpg psql pg2 << EOF
