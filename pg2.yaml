@@ -25,20 +25,6 @@ spec:
   storage:
     size: 1Gi
 
-  #bootstrap:
-  #  initdb:
-  #    dataChecksums: true
-  #    walSegmentSize: 32
-  #    import:
-  #      schemaOnly: true
-  #      type: microservice
-  #      databases:
-  #        - app
-  #      source:
-  #        externalCluster: pg1
-  #      postImportApplicationSQL:
-  #        - CREATE SUBSCRIPTION sub_plenary_documents CONNECTION 'host=pg1-rw user=logical_repuser dbname=app sslmode=require password=Thisisatest01#' PUBLICATION pub_plenary_documents
-
   externalClusters:
     - name: pg1
       connectionParameters:

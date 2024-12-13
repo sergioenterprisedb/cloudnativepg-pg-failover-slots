@@ -108,6 +108,7 @@ DROP SUBSCRIPTION sub_test;
 --CREATE SUBSCRIPTION sub_test 
 --CONNECTION 'host=pg1-rw user=logical_repuser dbname=app sslmode=require password=Thisisatest01#' 
 --PUBLICATION pub_test;
+--PUBLICATION pub_test WITH (synchronous_commit = 'on');
 
 EOF
 
@@ -116,4 +117,5 @@ kubectl-cnpg subscription create pg2 \
              --subscription sub_test \
              --external-cluster pg1 \
              --publication-dbname app \
-             --parameters "password_required=false,slot_name=sub_slot_test,create_slot=false"
+             --parameters "password_required=false,slot_name=sub_slot_test,create_slot=false,synchronous_commit=on"
+             #--parameters "password_required=false,slot_name=sub_slot_test,create_slot=false"
